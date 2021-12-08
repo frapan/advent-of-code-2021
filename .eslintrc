@@ -1,0 +1,41 @@
+{
+  "parser": "@babel/eslint-parser",
+  "plugins": [],
+  "extends": [
+    "standard",
+    "prettier",
+    "eslint:recommended"
+  ],
+  "env": {
+    "browser": false,
+    "node": true,
+    "jest": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "impliedStrict": true,
+      "jsx": false
+    },
+    "requireConfigFile": false
+  },
+  "rules": {
+    "sql/format": [
+      0,
+      {
+        "ignoreExpressions": false,
+        "ignoreInline": true,
+        "ignoreTagless": true
+      }
+    ],
+    "sql/no-unsafe-query": [
+      0,
+      {
+        "allowLiteral": false
+      }
+    ],
+    "no-sparse-arrays": "off"
+  }
+}
