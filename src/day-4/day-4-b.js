@@ -738,7 +738,7 @@ let boards = [
 //   ],
 // ]
 
-let winnerBoardCount = 0
+let winnerBoardsSet = new Set()
 const HIGH_NUMBER = 1000
 
 const evaluateVictory = (boardIndex, x, y) => {
@@ -780,9 +780,6 @@ const checkBoard = (boardIndex, num) => {
         boards[boardIndex][y][x] = boards[boardIndex][y][x] + HIGH_NUMBER
         const boardUnmarkedSum = evaluateVictory(boardIndex, x, y)
         if (boardUnmarkedSum > 0) {
-          winnerBoardCount++
-          if (winnerBoardCount === boards.length) {
-            printBoard(boardIndex)
             return {
               boardIndex,
               x,
@@ -791,7 +788,6 @@ const checkBoard = (boardIndex, num) => {
               boardUnmarkedSum,
               solution: boardUnmarkedSum * num,
             }
-          }
         }
       }
     }
@@ -799,11 +795,14 @@ const checkBoard = (boardIndex, num) => {
 }
 
 for (let num = 0; num < numbers.length; num++) {
-  for (let i = 0; i < boards.length; i++) {
-    const result = checkBoard(i, numbers[num])
+  for (let boardIndex = 0; boardIndex < boards.length; boardIndex++) {
+    const result = checkBoard(boardIndex, numbers[num])
     if (result) {
-      console.log(result)
-      process.exit(0)
+      winnerBoardsSet.add(boardIndex)
+      if (winnerBoardsSet.size === boards.length) {
+        console.log(result)
+        process.exit(0)
+      }
     }
   }
 }
