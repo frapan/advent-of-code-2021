@@ -503,18 +503,18 @@ let input = [
   '160,751 -> 787,124',
 ]
 
-// input = [
-//   '0,9 -> 5,9',
-//   '8,0 -> 0,8',
-//   '9,4 -> 3,4',
-//   '2,2 -> 2,1',
-//   '7,0 -> 7,4',
-//   '6,4 -> 2,0',
-//   '0,9 -> 2,9',
-//   '3,4 -> 1,4',
-//   '0,0 -> 8,8',
-//   '5,5 -> 8,2',
-// ]
+input = [
+  '0,9 -> 5,9',
+  '8,0 -> 0,8',
+  '9,4 -> 3,4',
+  '2,2 -> 2,1',
+  '7,0 -> 7,4',
+  '6,4 -> 2,0',
+  '0,9 -> 2,9',
+  '3,4 -> 1,4',
+  '0,0 -> 8,8',
+  '5,5 -> 8,2',
+]
 
 let logContent = ''
 let atLeastTwoOverlaps = 0
@@ -527,24 +527,29 @@ const weightedPoints = input.reduce((acc, line) => {
   const y1 = Number(y1s)
   const x2 = Number(x2s)
   const y2 = Number(y2s)
-  if (!x1 || !x2 || !y1 || !y2) {
-    console.error(`Error at line: ${line}`, x1, y1, x2, y2)
-  }
   if (x1 !== x2 && y1 !== y2) {
-    logContent += `Skip line: ${line}\n`
-    return acc
-  }
-  if (x1 === x2) {
+    const lowerX = x1 > x2 ? x2 : x1
+    const lowerY = y1 > y2 ? y2 : y1
+    for (let i = 0; i <= Math.abs(x1 - x2); i++) {
+      const key = `${lowerX + i}|${lowerY + i}`
+      acc[key] = (acc[key] || 0) + 1
+      if (acc[key] === 2) {
+        atLeastTwoOverlaps++
+      }
+    }
+  } else if (x1 === x2) {
     for (let y = y1 > y2 ? y2 : y1; y <= (y1 > y2 ? y1 : y2); y++) {
-      acc[`${x1}|${y}`] = (acc[`${x1}|${y}`] || 0) + 1
-      if (acc[`${x1}|${y}`] === 2) {
+      const key = `${x1}|${y}`
+      acc[key] = (acc[key] || 0) + 1
+      if (acc[key] === 2) {
         atLeastTwoOverlaps++
       }
     }
   } else {
     for (let x = x1 > x2 ? x2 : x1; x <= (x1 > x2 ? x1 : x2); x++) {
-      acc[`${x}|${y1}`] = (acc[`${x}|${y1}`] || 0) + 1
-      if (acc[`${x}|${y1}`] === 2) {
+      const key = `${x}|${y1}`
+      acc[key] = (acc[key] || 0) + 1
+      if (acc[key] === 2) {
         atLeastTwoOverlaps++
       }
     }
@@ -554,7 +559,7 @@ const weightedPoints = input.reduce((acc, line) => {
 
 const run = async () => {
   logContent += JSON.stringify(weightedPoints, null, 2)
-  await writeFile('aaa.json', logContent)
+  // await writeFile('aaa.json', logContent)
 
   console.log(atLeastTwoOverlaps)
 }
