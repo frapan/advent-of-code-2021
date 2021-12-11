@@ -503,18 +503,18 @@ let input = [
   '160,751 -> 787,124',
 ]
 
-input = [
-  '0,9 -> 5,9',
-  '8,0 -> 0,8',
-  '9,4 -> 3,4',
-  '2,2 -> 2,1',
-  '7,0 -> 7,4',
-  '6,4 -> 2,0',
-  '0,9 -> 2,9',
-  '3,4 -> 1,4',
-  '0,0 -> 8,8',
-  '5,5 -> 8,2',
-]
+// input = [
+//   '0,9 -> 5,9',
+//   '8,0 -> 0,8',
+//   '9,4 -> 3,4',
+//   '2,2 -> 2,1',
+//   '7,0 -> 7,4',
+//   '6,4 -> 2,0',
+//   '0,9 -> 2,9',
+//   '3,4 -> 1,4',
+//   '0,0 -> 8,8',
+//   '5,5 -> 8,2',
+// ]
 
 let logContent = ''
 let atLeastTwoOverlaps = 0
@@ -528,10 +528,8 @@ const weightedPoints = input.reduce((acc, line) => {
   const x2 = Number(x2s)
   const y2 = Number(y2s)
   if (x1 !== x2 && y1 !== y2) {
-    const lowerX = x1 > x2 ? x2 : x1
-    const lowerY = y1 > y2 ? y2 : y1
     for (let i = 0; i <= Math.abs(x1 - x2); i++) {
-      const key = `${lowerX + i}|${lowerY + i}`
+      const key = `${x1 > x2 ? x1 - i : x1 + i}|${y1 > y2 ? y1 - i : y1 + i}`
       acc[key] = (acc[key] || 0) + 1
       if (acc[key] === 2) {
         atLeastTwoOverlaps++
