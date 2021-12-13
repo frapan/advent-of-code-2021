@@ -53,27 +53,8 @@ const getNumDiscendenti = (giorniDiVita) => {
   return numDiscendenti
 }
 
-let totalByFish = 0
-for (let fishIndex = 0; fishIndex < input.length; fishIndex++) {
-  console.log(
-    `${fishIndex}) ${1 + getNumDiscendenti(totalDays + 6 - input[fishIndex])}`
-  )
-  totalByFish += 1 + getNumDiscendenti(totalDays + 6 - input[fishIndex])
-}
-console.log('totalFish', totalByFish)
+const totalFishes = input.reduce((acc, fish, fishIndex) => {
+  return acc + 1 + getNumDiscendenti(totalDays + 6 - input[fishIndex])
+}, 0)
 
-// for (let day = 1; day <= totalDays; day++) {
-//   const addedFishes = []
-//   for (let fishIndex = 0; fishIndex < input.length; fishIndex++) {
-//     if (input[fishIndex] === 0) {
-//       input[fishIndex] = 6
-//       addedFishes.push(8)
-//     } else {
-//       input[fishIndex]--
-//     }
-//   }
-//   input.push(...addedFishes)
-// }
-//
-// console.log(input.length)
-// console.log(input)
+console.log('totalFishes', totalFishes) // 1631647919273
