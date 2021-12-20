@@ -193,6 +193,7 @@ const findShortestPath = (startX, startY, endX, endY) => {
   let nodeKey = shortestDistanceNodeKey(distances, visited)
 
   // for that node
+  let lastDate = Date.now()
   while (nodeKey) {
     // find its distance from the start node & its child nodes
     const distance = distances[nodeKey]
@@ -214,7 +215,17 @@ const findShortestPath = (startX, startY, endX, endY) => {
     }
     // move the node to the visited set
     visited.push(nodeKey)
-    console.log('visited', visited.length, '/', maxY * maxX)
+    if (visited.length % 1000 === 0) {
+      console.log(
+        'visited',
+        visited.length,
+        '/',
+        maxY * maxX,
+        (Date.now() - lastDate) / 1000
+      )
+      lastDate = Date.now()
+    }
+
     // move to the nearest neighbor node
     nodeKey = shortestDistanceNodeKey(distances, visited)
   }
