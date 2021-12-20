@@ -101,6 +101,7 @@ let input = [
   '8195996699568965579198729534577878698778991795617454587967117967862889252256796526887997997398959165',
 ]
 
+/*
 input = [
   '1163751742',
   '1381373672',
@@ -113,8 +114,26 @@ input = [
   '1293138521',
   '2311944581',
 ]
+*/
 
-const matrix = input.map((row) => row.split('').map(Number))
+const initialMatrix = input.map((row) => row.split('').map(Number))
+const initialMaxY = initialMatrix.length
+const initialMaxX = initialMatrix[0].length
+
+const matrix = []
+for (let y = 0; y < initialMatrix.length * 5; y++) {
+  for (let x = 0; x < initialMatrix[0].length * 5; x++) {
+    if (x === 0) {
+      matrix[y] = []
+    }
+    const newValue =
+      initialMatrix[y % initialMaxY][x % initialMaxX] +
+      Math.floor(y / initialMaxY) +
+      Math.floor(x / initialMaxX)
+    matrix[y][x] = newValue > 9 ? newValue - 9 : newValue
+  }
+}
+
 const maxY = matrix.length
 const maxX = matrix[0].length
 console.log(maxX, maxY)
@@ -126,54 +145,87 @@ const printMatrix = () => {
   })
 }
 
-const getRiskAt = (x, y) => {
-  const cacheKey = `${x}-${y}`
-  if (getRiskAt[cacheKey]) {
-    return getRiskAt[cacheKey]
+const getCellKey = (x, y) => `${x}-${y}`
+const getCoordsFromCellKey = (cellKey) => cellKey.split('-').map(Number)
+
+const shortestDistanceNodeKey = (distances, visited) => {
+  let shortestKey = null
+
+  for (const nodeKey in distances) {
+    const currentIsShortest =
+      shortestKey === null || distances[nodeKey] < distances[shortestKey]
+    if (currentIsShortest && !visited.includes(nodeKey)) {
+      shortestKey = nodeKey
+    }
   }
-  const cellRisk = x === 0 && y === 0 ? 0 : matrix[y][x]
-  if (x === maxX - 1 && y === maxY - 1) {
-    const directions = [{ x, y, dir: '', cellRisk, pathRisk: cellRisk }]
-    getRiskAt[cacheKey] = { pathRisk: cellRisk, directions }
-    // console.log(x, y, cellRisk)
-    return { pathRisk: cellRisk, directions }
-  }
-  const riskRight = x < maxX - 1 ? getRiskAt(x + 1, y) : null
-  const riskDown = y < maxY - 1 ? getRiskAt(x, y + 1) : null
-  const betterRisk =
-    (riskRight?.pathRisk || Number.MAX_SAFE_INTEGER) <
-    (riskDown?.pathRisk || Number.MAX_SAFE_INTEGER)
-      ? riskRight
-      : riskDown
-  const pathRisk = cellRisk + betterRisk.pathRisk
-  const directions = [
-    {
-      x,
-      y,
-      dir: betterRisk === riskRight ? 'right' : 'down',
-      cellRisk,
-      pathRisk,
-      // riskRight: riskRight?.pathRisk,
-      // riskDown: riskDown?.pathRisk,
-    },
-  ].concat(betterRisk.directions)
-  getRiskAt[cacheKey] = { pathRisk, directions }
-  // if (x >= 8 && y >= 8) {
-  //   console.log(
-  //     x,
-  //     y,
-  //     cellRisk,
-  //     riskRight,
-  //     riskDown,
-  //     betterRisk,
-  //     riskRight?.pathRisk || Number.MAX_SAFE_INTEGER,
-  //     riskDown?.pathRisk || Number.MAX_SAFE_INTEGER
-  //   )
-  // }
-  return getRiskAt[cacheKey]
+  return shortestKey
 }
 
-const risk = getRiskAt(0, 0)
+const getNeighbours = (x, y) => {
+  const neighbours = {}
+  if (x > 0) {
+    neighbours[getCellKey(x - 1, y)] = matrix[y][x - 1]
+  }
+  if (y > 0) {
+    neighbours[getCellKey(x, y - 1)] = matrix[y - 1][x]
+  }
+  if (x < maxX - 1) {
+    neighbours[getCellKey(x + 1, y)] = matrix[y][x + 1]
+  }
+  if (y < maxY - 1) {
+    neighbours[getCellKey(x, y + 1)] = matrix[y + 1][x]
+  }
+  return neighbours
+}
 
-risk.directions.forEach((dir) => console.log(dir))
-console.log(risk.pathRisk) // 603 too low, 717 too high
+const findShortestPath = (startX, startY, endX, endY) => {
+  // establish object for recording distances from the start node
+  const endNodeKey = getCellKey(endX, endY)
+  const startNodeKey = getCellKey(startX, startY)
+  const distances = {}
+  distances[endNodeKey] = 'Infinity'
+  Object.assign(distances, getNeighbours(startX, startY))
+
+  // track nodes that have already been visited
+  const visited = []
+
+  // find the nearest node
+  let nodeKey = shortestDistanceNodeKey(distances, visited)
+
+  // for that node
+  while (nodeKey) {
+    // find its distance from the start node & its child nodes
+    const distance = distances[nodeKey]
+    const children = getNeighbours(...getCoordsFromCellKey(nodeKey))
+    // for each of those child nodes
+    for (const child in children) {
+      // make sure each child node is not the start node
+      if (child !== startNodeKey) {
+        // save the distance from the start node to the child node
+        const newdistance = distance + children[child]
+        // if there's no recorded distance from the start node to the child node in the distances object
+        // or if the recorded distance is shorter than the previously stored distance from the start node to the child node
+        // save the distance to the object
+        // record the path
+        if (!distances[child] || distances[child] > newdistance) {
+          distances[child] = newdistance
+        }
+      }
+    }
+    // move the node to the visited set
+    visited.push(nodeKey)
+    console.log('visited', visited.length, '/', maxY * maxX)
+    // move to the nearest neighbor node
+    nodeKey = shortestDistanceNodeKey(distances, visited)
+  }
+
+  // return the shortest path from start node to end node & its distance
+  return {
+    distance: distances[endNodeKey],
+  }
+}
+
+const result = findShortestPath(0, 0, maxX - 1, maxY - 1)
+console.log(result)
+
+// 16:36 ->
