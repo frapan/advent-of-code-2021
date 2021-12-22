@@ -118,149 +118,82 @@ if (useTestInput) {
   ]
 }
 
-const initialMatrix = input.map((row) => row.split('').map(Number))
-const initialMaxY = initialMatrix.length
-const initialMaxX = initialMatrix[0].length
+const originalMap = input.map((row) => row.split('').map(Number))
+let currentMap = originalMap
 
-let matrix = initialMatrix
-const enlargeMatrix = true
-if (enlargeMatrix) {
-  matrix = []
-  for (let y = 0; y < initialMatrix.length * 5; y++) {
-    for (let x = 0; x < initialMatrix[0].length * 5; x++) {
-      if (x === 0) {
-        matrix[y] = []
-      }
-      const newValue =
-        initialMatrix[y % initialMaxY][x % initialMaxX] +
-        Math.floor(y / initialMaxY) +
-        Math.floor(x / initialMaxX)
-      matrix[y][x] = newValue > 9 ? newValue - 9 : newValue
-    }
+// This is... not very efficient. It takes ~1.3s for the first part and ~4.5m
+// for the second on my Ryzen 5 3600 and 16 GB RAM. But it does its job...
+// The hard part is to take some optimal paths that goes up or left. Consider
+// the following map:
+// 19111
+// 11191
+// Of course the best path from the top left to the bottom right corser follows
+// the 1's, but if our algorithm just moves down and right (as the examples
+// might suggest it's enough), we won't get the correct answer.
+const getMinPathTo = (row, column) => {
+  // The idea is to keep a set of frontier points mapped to the value needed to
+  // reach them. We don't care about the path used to reach them, only about
+  // the minimum value we get to reach them.
+  // We start from the top left corner, which has a value of 0, and expand the
+  // frontier until it still has points.
+  const frontierValues = new Map([['0,0', 0]])
+  const finalCoords = row + ',' + column
+  // Once we reach the final coordinates, we track the computed value so far. It
+  // serves as an upper bound to the other paths (if a point has a larger value,
+  // it's removed from the frontier as it won't get us a better final value).
+  let minValue = Infinity
+  const insertPoint = (ptRow, ptCol, value) => {
+    const moveCoords = ptRow + ',' + ptCol
+    const moveValue = Math.min(
+      frontierValues.get(moveCoords) ?? Infinity,
+      value + currentMap[ptRow][ptCol]
+    )
+    frontierValues.set(moveCoords, moveValue)
+    if (moveCoords === finalCoords) minValue = Math.min(minValue, moveValue)
   }
-}
-const maxY = matrix.length
-const maxX = matrix[0].length
-console.log(maxX, maxY)
-
-const printMatrix = () => {
-  console.log('Matrix')
-  matrix.forEach((row) => {
-    console.log(row.join(''))
-  })
-}
-// printMatrix()
-
-const getCellKey = (x, y) => `${x}-${y}`
-const getCoordsFromCellKey = (cellKey) => cellKey.split('-').map(Number)
-
-const getNeighbourKeys = (x, y, visited) => {
-  const neighbours = []
-  let cellKey = getCellKey(x - 1, y)
-  if (x > 0 && !visited[cellKey]) {
-    neighbours.push(cellKey)
-  }
-  cellKey = getCellKey(x, y - 1)
-  if (y > 0 && !visited[cellKey]) {
-    neighbours.push(cellKey)
-  }
-  cellKey = getCellKey(x + 1, y)
-  if (x < maxX - 1 && !visited[cellKey]) {
-    neighbours.push(cellKey)
-  }
-  cellKey = getCellKey(x, y + 1)
-  if (y < maxY - 1 && !visited[cellKey]) {
-    neighbours.push(cellKey)
-  }
-  return neighbours
-}
-
-const findShortestPath = (startX, startY, endX, endY) => {
-  // establish object for recording distances from the start node
-  const endNodeKey = getCellKey(endX, endY)
-  const startNodeKey = getCellKey(startX, startY)
-  const distances = {
-    [startNodeKey]: 0,
-  }
-  // distances[endNodeKey] = 'Infinity'
-
-  // track nodes that have already been visited
-  const visited = {}
-
-  const frontierNodeKeys = new Set()
-
-  // find the nearest node
-  let nodeKey = startNodeKey
-
-  // Let's start with an estimated cost of 7 for each cell from start to end,
-  // to speed up the process
-  let cost = (maxX + maxY) * 7
-
-  // for that node
-  let lastDate = Date.now()
-  while (nodeKey) {
-    // console.log('loop', nodeKey, frontierNodeKeys)
-    // find its distance from the start node & its child nodes
-    const distance = distances[nodeKey]
-    if (distance < cost) {
-      const neighbourKeys = getNeighbourKeys(
-        ...getCoordsFromCellKey(nodeKey),
-        visited
-      )
-      // console.log('neighbourKeys', neighbourKeys)
-      neighbourKeys.forEach((k) => frontierNodeKeys.add(k))
-      // for each of those child nodes
-      for (const neighbourKey of neighbourKeys) {
-        // make sure each child node is not the start node
-        if (!visited[neighbourKey]) {
-          // save the distance from the start node to the child node
-          const coords = getCoordsFromCellKey(neighbourKey)
-          const newdistance = distance + matrix[coords[1]][coords[0]]
-          // if there's no recorded distance from the start node to the child node in the distances object
-          // or if the recorded distance is shorter than the previously stored distance from the start node to the child node
-          // save the distance to the object
-          // record the path
-          // console.log('distance1', neighbourKey, newdistance, distances[neighbourKey])
-          if (
-            !distances[neighbourKey] ||
-            distances[neighbourKey] > newdistance
-          ) {
-            distances[neighbourKey] = newdistance
-            // console.log('distance', neighbourKey, newdistance, distances[neighbourKey])
-          }
-          // console.log('distance2', neighbourKey, newdistance, distances[neighbourKey])
-          if (neighbourKey === endNodeKey) {
-            cost = Math.min(cost, distances[neighbourKey])
-          }
+  while (frontierValues.size)
+    for (const [coords, value] of frontierValues.entries()) {
+      if (value < minValue) {
+        const [pointRow, pointCol] = coords.split(',').map(Number)
+        if (pointRow < currentMap.length - 1) {
+          insertPoint(pointRow + 1, pointCol, value)
+        }
+        if (pointCol < currentMap[0].length - 1) {
+          insertPoint(pointRow, pointCol + 1, value)
+        }
+        if (pointRow) {
+          insertPoint(pointRow - 1, pointCol, value)
+        }
+        if (pointCol) {
+          insertPoint(pointRow, pointCol - 1, value)
         }
       }
+      // We moved away from this point, so we remove it from the frontier
+      frontierValues.delete(coords)
     }
+  return minValue
+}
 
-    // move the node to the visited set
-    visited[nodeKey] = true
-    if (Object.keys(visited).length % 1000 === 0) {
-      console.log(
-        'visited',
-        Object.keys(visited).length,
-        '/',
-        maxY * maxX,
-        (Date.now() - lastDate) / 1000
+// console.log(getMinPathTo(currentMap.length - 1, currentMap[0].length - 1))
+
+// We start building our larger map...
+currentMap = []
+
+for (let i = 0; i < 5; i++) {
+  originalMap.forEach((_, row) => {
+    currentMap[i * originalMap.length + row] = []
+  })
+  for (let j = 0; j < 5; j++) {
+    const dist = i + j
+    originalMap.forEach((line, row) =>
+      line.forEach(
+        (value, column) =>
+          (currentMap[i * originalMap.length + row][
+            j * originalMap[0].length + column
+          ] = ((value + dist - 1) % 9) + 1)
       )
-      lastDate = Date.now()
-    }
-
-    // move to the nearest neighbor node
-    frontierNodeKeys.delete(nodeKey)
-    delete distances[nodeKey]
-    nodeKey = frontierNodeKeys.values().next().value
-    // console.log('end loop', nodeKey, frontierNodeKeys)
-  }
-
-  // return the shortest path from start node to end node & its distance
-  return {
-    cost,
+    )
   }
 }
 
-const result = findShortestPath(0, 0, maxX - 1, maxY - 1)
-console.log(result) // 2948, 2965 too high
+console.log(getMinPathTo(currentMap.length - 1, currentMap[0].length - 1))
