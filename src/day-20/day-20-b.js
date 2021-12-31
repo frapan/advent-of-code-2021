@@ -61,18 +61,3 @@ const countLights = (image) =>
 
 printImage(inputImage)
 console.log(countLights(inputImage)) // 176473 too high
-
-// const reducedImage = inputImage
-//   .filter((row) => {
-//     const rowStr = row.join('')
-//     return rowStr.match(/^#{6}\.{2,}#+\.+#+/g)
-//   })
-//   .map((row) => row.slice(6, row.length - 4))
-// // printImage(reducedImage)
-//
-// console.log(countLights(reducedImage)) // 176473 too high
-
-const { writeFileSync } = require('fs')
-const fileContent = inputImage.map((row) => row.join('')).join('\n')
-
-writeFileSync('bbb.txt', fileContent, 'utf-8')
